@@ -1,0 +1,300 @@
+\newcommand{\desig}[2]{\item #1 $\approx #2$}
+\newenvironment{designations}
+  {\begin{leftbar}
+    \begin{list}{}{\setlength{\labelsep}{0cm}
+                   \setlength{\labelwidth}{0cm}
+                   \setlength{\listparindent}{0cm}
+                   \setlength{\rightmargin}{\leftmargin}}}
+  {\end{list}\end{leftbar}}
+
+\newcommand{\setlog}{$\{log\}$\xspace}
+
+\section{Requerimientos del Problema}
+A continuación se describen los requerimientos funcionales de nuesto \textit{Gestor de Mails} : 
+\begin{itemize}
+    \item Agregar un usuario al gestor,
+    \item Mandar/Recibir mensajes entre usuarios,
+    \item Leer y obtener un mensaje si hay alguno en la casilla de nuevo,
+    \item Permitir a los usuarios borrar a elección sus casillas de mensajes,  
+    \item Las casillas de cada usuario pueden contener 2 mensajes como máximo
+    \item Cuando se lee un mensaje nuevo, este pasa a la bandeja de leídos para un usuario cualquiera
+\end{itemize}
+
+La cota de la cantidad de mensajes fue elegida de forma arbitraria, pero puede ser modificada fácilmente en el axioma dónde la defino.
+
+\section{Designaciones del Problema}
+
+\begin{designations}
+\desig{$u$ es un usuario}{u \in USER}
+\desig{$m$ es un mensaje}{m \in MENSAJE}
+\desig{Conjunto de todas las casillas de mails nuevos del gestor}{UsersNewMails}
+\desig{Casillas de nuevos para el usuario $u$}{UsersNewMails\ u}
+
+\desig{Conjunto de todas las casillas de mails leídos del gestor}{UsersReadMails}
+\desig{Casillas de leídos para el usuario $u$}{UsersReadMails\ u}
+
+\desig{Conjunto de todas las casillas de mails enviados del gestor}{UsersSendMails}
+\desig{Casillas de enviados para el usuario $u$}{UsersSendMails\ u}
+\end{designations}
+
+\section{Especificación Z}
+Entrando ya a la especificación, primeramente recurrimos a los tipo libres en Z, hemos declarado los siguientes:
+\begin{zed}
+[USER, MENSAJE]
+\also
+MSJLIST == \power(USER \cross MENSAJE)
+\also
+CASILLA == USER \pfun MSJLIST
+\end{zed}
+Estos tipos declarados son expresivos en si mismos. Sabemos que los mensajes pueden tener múltiples representaciones, las casillas de un usuario $u$ esta formada por un conjunto de tuplas $(user\ x\ mensaje)$ por lo tanto sabemos quién le mandó un $mensaje$ al usuario $u$, de quién el usuario $u$ está leyendo un $mensaje$ y quién le mandó un $mensaje$ al usuario $u$
+
+Acompañamos con una definición axiomática sobre la cota del tamaño de una casilla de mails para un usuario $u$
+
+\begin{axdef}
+capMaxima : \nat 
+\where
+capMaxima = 2 
+\end{axdef}
+
+Definimos nuestro $Gestor\ de\ Mails$ y su estado inicial
+\begin{schema}{GestorMails}
+UsersNewMails : CASILLA \\
+UsersReadMails : CASILLA \\
+UsersSendMails : CASILLA 
+\end{schema}
+
+\begin{schema}{GestorMailsInit}
+GestorMails
+\where
+UsersNewMails = \emptyset \\
+UsersReadMails = \emptyset \\
+UsersSendMails = \emptyset
+\end{schema}
+
+Ahora hablemos de las invariantes planteadas. La primera, obviamente, es la cota del tamaño de las casillas por la cual tenemos que hacer uso del cuantificador universal porque tenemos que constatar que todo usuario que esté en las $casillas$ tenga asociado una $box\ de\ mensajes$ acotada. La segunda invariante es que todo usuario registrado en el gestor, tiene las tres casillas para operar.
+
+\begin{schema}{GestorMailsInv}
+GestorMails
+\where
+\dom(UsersNewMails) = \dom(UsersReadMails)\\
+\dom(UsersReadMails) = \dom(UsersSendMails) \\
+
+\forall x : USER |x \in \dom UsersNewMails @ \# (UsersNewMails(x)) \leq capMaxima \\
+\forall x:USER |x \in \dom UsersReadMails @ \# (UsersReadMails(x)) \leq capMaxima \\
+\forall x : USER |x \in \dom UsersSendMails @ \# (UsersSendMails(x)) \leq capMaxima 
+\end{schema}
+
+Ahora entramos a definir las operaciones de nuestro problema, primeramente $SendMsg$
+
+{\small
+\begin{schema}{SendMsgOk}
+\Delta GestorMails \\
+to?: USER \\
+from?: USER \\
+body? : MENSAJE
+\where
+
+to? \in \dom(UsersNewMails) \\
+from? \in \dom(UsersSendMails) \\
+
+(\# (UsersNewMails(to?))) + 1 \leq capMaxima \\
+(\# (UsersSendMails(from?))) + 1 \leq capMaxima \\
+
+UsersSendMails' = UsersSendMails \oplus \{from? \mapsto (UsersSendMails(from?)) \cup \{(to?,body?)\} \} \\ 
+UsersNewMails' = UsersNewMails \oplus \{to? \mapsto (UsersNewMails(to?)) \cup \{(from?,body?)\} \} \\
+UsersReadMails' = UsersReadMails
+
+\end{schema}
+}
+\begin{schema}{EmisorUnreachable}
+\Xi GestorMails \\
+from? : USER
+\where
+from? \notin \dom(UsersSendMails)
+\end{schema}
+
+\begin{schema}{DestinoUnreachable}
+\Xi GestorMails \\
+to? : USER
+\where
+to? \notin \dom(UsersNewMails)
+\end{schema}
+
+\begin{schema}{FullSendBox}
+\Xi GestorMails \\
+from? :USER \\
+\where
+\lnot(((\# (UsersSendMails(from?)))+1)\leq capMaxima)
+\end{schema}
+
+\begin{schema}{FullNewBox}
+\Xi GestorMails \\
+to? :USER 
+\where
+\lnot(((\# (UsersNewMails(to?)))+1)\leq capMaxima)
+\end{schema}
+
+{\small
+\begin{zed}
+SendMgsNoOk \defs EmisorUnreachable \lor DestinoUnreachable \lor FullSendBox \lor FullNewBox \\
+\end{zed}
+}
+\begin{zed}
+SendMsg \defs SendMsgOk \lor SendMgsNoOk \\
+\end{zed}
+
+Definimos la operación $ReadMsg$, recordando que si leemos un mensaje tenemos que sacarlo del la casilla de nuevos y pasarlo a la de leídos, para ello usamos la diferencia planteada en el apunte:
+
+
+{\small
+\begin{schema}{ReadMsgOk}
+\Delta GestorMails \\
+lector? :USER\\
+msg! :MENSAJE 
+\where
+lector? \in \dom(UsersNewMails) \\
+lector? \in \dom(UsersReadMails) \\
+\exists u: USER @(\exists m: MENSAJE @( \\
+(u,m) \in (UsersNewMails(lector?)) \land  \\
+msg!  = m \land \\
+(\# (UsersReadMails(lector?)) + 1) \leq capMaxima \land\\
+UsersNewMails' =  UsersNewMails \oplus \{lector? \mapsto (UsersNewMails(lector?))  \setminus \{(u,m)\}\} \land \\
+UsersReadMails' = UsersReadMails \oplus \{lector? \mapsto (UsersReadMails(lector?)) \cup \{(u,m)\} \} \land \\
+UsersSendMails' = UsersSendMails ))
+\end{schema}
+}
+
+\begin{schema}{LectorNotFound}
+\Xi GestorMails \\
+lector?: USER 
+\where
+(lector? \notin \dom(UsersNewMails) \\
+\lor
+lector? \notin \dom(UsersReadMails)) 
+\end{schema}
+
+\begin{schema}{NewBoxEmpty}
+\Xi GestorMails \\
+lector?: USER \\
+\where
+\#(UsersNewMails(lector?)) = 0
+\end{schema}
+
+\begin{schema}{ReadBoxFull}
+\Xi GestorMails \\
+lector?: USER 
+\where
+\lnot ((\# (UsersReadMails(lector?)))+1 \leq capMaxima)
+\end{schema}
+
+\begin{zed}
+ReadMsgNoOk \defs NewBoxEmpty \lor ReadBoxFull \lor LectorNotFound\\
+\end{zed}
+\begin{zed}
+ReadMsg \defs ReadMsgOk \lor ReadMsgNoOk \\
+\end{zed}
+
+Definimos la operación de vaciado de la bandeja de leídos $CleanReadBox$: 
+
+\begin{schema}{CleanReadBoxOk}
+\Delta GestorMails\\
+user?:USER
+\where
+user? \in \dom UsersReadMails \\
+UsersReadMails' =  UsersReadMails \oplus \{user? \mapsto \emptyset  \} \\
+UsersNewMails' = UsersNewMails \\
+UsersSendMails' = UsersSendMails
+\end{schema}
+
+\begin{schema}{CleanReadBoxNoOk}
+\Xi GestorMails \\
+user?:USER
+\where
+user? \notin \dom UsersReadMails \\
+\end{schema}
+
+\begin{zed}
+CleanReadBox \defs CleanReadBoxOk \lor CleanReadBoxNoOk \\
+\end{zed}
+
+Definimos la operación de vaciado de la bandeja de enviados $CleanSendBox$:
+
+\begin{schema}{CleanSendBoxOk}
+\Delta GestorMails\\
+user?:USER
+\where
+user? \in \dom UsersSendMails \\
+UsersSendMails' =  UsersSendMails \oplus \{user? \mapsto \emptyset  \} \\
+UsersNewMails' = UsersNewMails \\
+UsersReadMails' = UsersReadMails
+\end{schema}
+
+\begin{schema}{CleanSendBoxNoOk}
+\Xi GestorMails \\
+user?:USER
+\where
+user? \notin \dom UsersSendMails \\
+\end{schema}
+
+
+\begin{zed}
+CleanSendBox \defs CleanSendBoxOk \lor CleanSendBoxNoOk \\
+\end{zed}
+
+Definimos la operación de vaciado de la bandeja de nuevos $CleanNewBox$:
+
+\begin{schema}{CleanNewBoxOk}
+\Delta GestorMails\\
+user?:USER
+\where
+user? \in \dom UsersNewMails \\
+UsersNewMails' =  UsersNewMails \oplus \{user? \mapsto \emptyset  \} \\
+UsersSendMails' = UsersSendMails \\
+UsersReadMails' = UsersReadMails
+\end{schema}
+
+\begin{schema}{CleanNewBoxNoOk}
+\Xi GestorMails \\
+user?:USER
+\where
+user? \notin \dom UsersNewMails \\
+\end{schema}
+
+\begin{zed}
+CleanNewBox \defs CleanNewBoxOk \lor CleanNewBoxNoOk \\
+\end{zed}
+
+Como última operación definimos el agregado de usuarios $AddUser$:
+
+\begin{schema}{AddUserOk}
+\Delta GestorMails \\
+user? : USER
+\where
+user? \notin \dom(UsersNewMails) \\
+user? \notin \dom(UsersReadMails) \\
+user? \notin \dom(UsersSendMails) \\
+
+UsersNewMails' = UsersNewMails \cup \{(user?,\emptyset)\} \\
+UsersReadMails' = UsersReadMails \cup \{(user?,\emptyset)\} \\
+UsersSendMails' = UsersSendMails \cup \{(user?,\emptyset)\} 
+\end{schema}
+
+\begin{schema}{UserInMail}
+\Xi GestorMails \\
+user?: USER
+\where
+(user? \in \dom(UsersNewMails)\\
+\lor
+user? \in \dom(UsersReadMails) \\
+\lor
+user? \in \dom(UsersSendMails))  
+\end{schema}
+
+\begin{zed}
+AddUserNoOk \defs UserInMail \\
+\end{zed}
+\begin{zed}
+AddUser \defs AddUserOk \lor AddUserNoOk \\
+\end{zed}
+
+

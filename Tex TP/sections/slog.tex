@@ -1,0 +1,310 @@
+\section{Cargar el $\{log\}$}
+Como necesitamos la libreria $setloglib.slog$ dejamos un paso a paso de ejecución. Es opcional dependiendo de como se quiera correr el comando \verb|type_check.|Pasos: 
+
+\verb|[setlog].|
+
+\verb|setlog(add_lib('setloglib.slog')).|
+
+\verb|setlog.|
+
+ \verb|type_check.|
+
+ \verb|consult('mail.pl').|
+ \section{Diferencia entre el modelo de $\{log\}$ y el modelo de Z-eves/Fastest}
+Los modelos de Z-eves y Fastest son iguales salvando los meros comandos para definir esquemas, pero difieren con el modelo planteado en $setlog$ por el tipo básico MENSAJE que pasa a ser un renombramiento del tipo base String que nos provee prolog, lo usamos para simplificar la representación de un mensaje. La especificación de cualquiera de las operaciones no se ven afectadas por el cambio. Al contrario nos es más fácil al momento de simular ya sea mandando o recibiendo mensajes y compararlos.
+    \begin{verbatim}
+        :- dec_type(mensaje, str).
+ \end{verbatim}
+\section{Simulaciones}
+Mostramos las dos simulaciones hechas a partir del modelo en $\{log\}$. 
+\subsection{Primera Simulación}
+La primera simulación, siendo la tipada es la siguiente: 
+\begin{verbatim}
+:- dec_p_type(checkState(casilla, casilla, casilla,user,user)).
+checkState(N,R,S,Usr1,Usr2) :- 
+  N = {[Usr1, {[Usr1,"Borrador"],[Usr2,"hola usr1"]}] , [Usr2,
+  {[Usr1, "chau usr2"]}] } &
+  R = {[Usr1,{}],[Usr2,{}]} &
+  S = {[Usr2, {[Usr1,"hola usr1"]}] , [Usr1,{[Usr2, "chau usr2"],
+  [Usr1,"Borrador"]}] }  .
+
+
+:- dec_p_type(simulacionSimbolica2(user, user, casilla, casilla, casilla,
+casilla, casilla, casilla,casilla, casilla,casilla,
+casilla, casilla, casilla,casilla, casilla, casilla,
+casilla, casilla, casilla,casilla, casilla,casilla,
+casilla, casilla, casilla)).
+
+simulacion2(Usr1,Usr2,NewBoxInit,ReadBoxInit,SendBoxInit,
+            NewBox2,ReadBox2,SendBox2,NewBox3,ReadBox3,SendBox3,
+            NewBox4,ReadBox4,SendBox4,NewBox5,ReadBox5,SendBox5,
+            NewBox6,ReadBox6,SendBox6,NewBox7,ReadBox7,SendBox7,
+            NewBox8,ReadBox8,SendBox8 ):-
+checkState(NewBoxInit,ReadBoxInit,SendBoxInit,Usr1,Usr2) &
+Usr1 neq Usr2 &
+gestorMailsInv(NewBoxInit,ReadBoxInit,SendBoxInit) & 
+readMsg(NewBoxInit,ReadBoxInit,SendBoxInit,Usr1,PrimerMsg,
+        NewBox2,ReadBox2,SendBox2)  &
+dec(PrimerMsg,mensaje) &
+PrimerMsg = "Borrador" & 
+readMsg(NewBox2,ReadBox2,SendBox2,Usr2,SegundoMsg,
+        NewBox3,ReadBox3,SendBox3) &
+dec(SegundoMsg,mensaje) & 
+SegundoMsg = "chau usr2" &
+readMsg(NewBox3,ReadBox3,SendBox3,Usr1,TercerMsg,
+        NewBox4,ReadBox4,SendBox4) &
+dec(TercerMsg,mensaje) &
+TercerMsg = "hola usr1" &
+
+ cleanReadBox(NewBox4,ReadBox4,SendBox4,Usr1,NewBox5,ReadBox5,SendBox5) &
+ cleanSendBox(NewBox5,ReadBox5,SendBox5,Usr1,NewBox6,ReadBox6,SendBox6) &
+ cleanReadBox(NewBox6,ReadBox6,SendBox6,Usr2,NewBox7,ReadBox7,SendBox7) &
+ cleanSendBox(NewBox7,ReadBox7,SendBox7,Usr2,NewBox8,ReadBox8,SendBox8) .
+\end{verbatim}
+En esta primera simulación podemos ver que los estados iniciales de las casillas tienen que ser los que valida \verb|checkState()| de esa forma vamos a ir leyendo uno a uno los mensajes que tienen Usr1 y Usr2 en su casillas de nuevos, una vez que lo leen pasan el mensaje de la casilla de nuevos a la casilla de leídos (lo podemos constatar con los estados resultantes), checkeamos que los mensajes sean los esperados y limpiamos las casillas. Podemos observar las ternas de casillas (New,Read,Send) en el resultado a continuación:
+\begin{verbatim}
+Comando de ejecucion de la simulacion2() tipada:
+    simulacion2(user:usr1,user:usr2,
+    {[user:usr1, {[user:usr1,"Borrador"],[user:usr2,"hola usr1"]}] ,
+    [user:usr2,{[user:usr1, "chau usr2"]}] },
+    {[user:usr1,{}],[user:usr2,{}]},
+    {[user:usr2, {[user:usr1,"hola usr1"]}] ,
+    [user:usr1,{[user:usr2, "chau usr2"],[user:usr1,"Borrador"]}] }
+    ,N2,R2,S2,N3,R3,S3,N4,R4,S4,N5,R5,S5,N6,R6,S6,N7,R7,S7,N8,R8,S8) &
+    dec([N2,R2,S2,N3,R3,S3,N4,R4,S4,N5,R5,S5,N6,R6,S6,N7,R7,S7,N8,R8,S8],
+    casilla).
+
+Resultado:
+N2 = {[user:usr2,{[user:usr1,chau usr2]}],
+      [user:usr1,{[user:usr2,hola usr1]}]},  
+R2 = {[user:usr2,{}],
+      [user:usr1,{[user:usr1,Borrador]}]},  
+S2 = {[user:usr2,{[user:usr1,hola usr1]}],
+      [user:usr1,{[user:usr2,chau usr2],[user:usr1,Borrador]}]},  
+N3 = {[user:usr1,{[user:usr2,hola usr1]}],
+      [user:usr2,{}]},  
+R3 = {[user:usr1,{[user:usr1,Borrador]}],
+      [user:usr2,{[user:usr1,chau usr2]}]},  
+S3 = {[user:usr2,{[user:usr1,hola usr1]}],
+      [user:usr1,{[user:usr2,chau usr2],[user:usr1,Borrador]}]},  
+N4 = {[user:usr2,{}],
+      [user:usr1,{}]},  
+R4 = {[user:usr2,{[user:usr1,chau usr2]}],
+      [user:usr1,{[user:usr1,Borrador],[user:usr2,hola usr1]}]},  
+S4 = {[user:usr2,{[user:usr1,hola usr1]}],
+      [user:usr1,{[user:usr2,chau usr2],[user:usr1,Borrador]}]},  
+N5 = {[user:usr2,{}],
+      [user:usr1,{}]},  
+R5 = {[user:usr2,{[user:usr1,chau usr2]}],
+      [user:usr1,{}]},  
+S5 = {[user:usr2,{[user:usr1,hola usr1]}],
+      [user:usr1,{[user:usr2,chau usr2],[user:usr1,Borrador]}]},  
+N6 = {[user:usr2,{}],
+      [user:usr1,{}]},  
+R6 = {[user:usr2,{[user:usr1,chau usr2]}],
+      [user:usr1,{}]},  
+S6 = {[user:usr2,{[user:usr1,hola usr1]}],
+      [user:usr1,{}]},  
+N7 = {[user:usr2,{}],
+      [user:usr1,{}]},  
+R7 = {[user:usr1,{}],
+      [user:usr2,{}]},  
+S7 = {[user:usr2,{[user:usr1,hola usr1]}],
+      [user:usr1,{}]},  
+N8 = {[user:usr2,{}],
+      [user:usr1,{}]},  
+R8 = {[user:usr1,{}],
+      [user:usr2,{}]},  
+S8 = {[user:usr1,{}],
+      [user:usr2,{}]}
+\end{verbatim}
+Sin hacer extensa la explicación podemos fácilmente ver cómo las casillas se van vaciando extrayendo 1 a 1 sus mensajes y luego limpiamos las casillas.
+
+\subsection{Segunda Simulación}
+Esta simulación la vamos a mostrar de forma NO TIPADA
+\begin{verbatim}
+:- dec_p_type(simulacion1(mensaje,mensaje,user,user, casilla, 
+                              casilla,casilla, casilla, casilla,casilla,
+                              casilla, casilla,casilla, casilla, casilla,
+                              casilla, casilla,casilla,casilla,casilla,
+                              casilla,casilla,casilla,casilla,casilla,      
+                              casilla, casilla,casilla, casilla, casilla,
+                              casilla)).
+\end{verbatim}
+\newpage
+\begin{verbatim}
+simulacion1(MsgPingRequest,MsgPingReply,User1,User2,
+            NewBoxInit,ReadBoxInit,SendBoxInit,
+            NewBoxAdd1,ReadBoxAdd1,SendBoxAdd1,
+            NewBoxAdd2,ReadBoxAdd2,SendBoxAdd2,
+            NewBoxPing1,ReadBoxPing1,SendBoxPing1,
+            NewBoxPing2,ReadBoxPing2,SendBoxPing2,
+            NewBoxPeek1,ReadBoxPeek1,SendBoxPeek1,
+            NewBoxPeek2,ReadBoxPeek2,SendBoxPeek2,
+            NewBoxClean1,ReadBoxClean1,SendBoxClean1, 
+            NewBoxClean2,ReadBoxClean2,SendBoxClean2):-
+    gestorMailsInit(NewBoxInit,ReadBoxInit,SendBoxInit) &
+    addUser(NewBoxInit,ReadBoxInit,SendBoxInit,User1,
+            NewBoxAdd1,ReadBoxAdd1,SendBoxAdd1) &
+    addUser(NewBoxAdd1,ReadBoxAdd1,SendBoxAdd1,User2,
+            NewBoxAdd2,ReadBoxAdd2,SendBoxAdd2)  &
+    User1 neq User2 &
+    sendMsg(NewBoxAdd2,ReadBoxAdd2,SendBoxAdd2,User2,User1,MsgPingRequest,
+            NewBoxPing1,ReadBoxPing1,SendBoxPing1) &%"hola soy user1".
+    sendMsg(NewBoxPing1,ReadBoxPing1,SendBoxPing1,User1,User2,MsgPingReply,
+            NewBoxPing2,ReadBoxPing2,SendBoxPing2) &%"un gusto user1 soy user2"
+    readMsg(NewBoxPing2,ReadBoxPing2,SendBoxPing2,User2,MsgDeUser1aUser2,
+            NewBoxPeek1,ReadBoxPeek1,SendBoxPeek1)&
+    
+    dec(MsgDeUser1aUser2,mensaje) &
+    MsgDeUser1aUser2 = MsgPingRequest &
+
+    readMsg(NewBoxPeek1,ReadBoxPeek1,SendBoxPeek1,User1,MsgDeUser2aUser1,
+            NewBoxPeek2,ReadBoxPeek2,SendBoxPeek2)&
+    
+    dec(MsgDeUser2aUser1,mensaje) &
+    MsgDeUser2aUser1 = MsgPingReply &
+
+    cleanReadBox(NewBoxPeek2,ReadBoxPeek2,SendBoxPeek2,User1,
+                 NewBoxClean1,ReadBoxClean1,SendBoxClean1) &
+    cleanReadBox(NewBoxClean1,ReadBoxClean1,SendBoxClean1,User2,
+                 NewBoxClean2,ReadBoxClean2,SendBoxClean2) .
+\end{verbatim}
+Básicamente en esta simulación lo que queremos es partir desde el estado inicial para luego agregar dos usuarios al gestor y hacer un $ping$ entre ellos con mensajes proporcionados por el usuario.
+\begin{verbatim}
+    Comando no tipado:
+    simulacion1("mandame hola","hola",user1,user2, 
+                N0,R0,S0,N1,R1,S1,N2,R2,S2,N3,R3,S3,N4,R4,S4,N5,R5,S5,
+                N6,R6,S6,N7,R7,S7,N8,R8,S8) .
+    Resultado:
+    N0 = {},  
+    R0 = {},  
+    S0 = {},  
+    N1 = {[user1,{}]},  
+    R1 = {[user1,{}]},  
+    S1 = {[user1,{}]},  
+    N2 = {[user1,{}],[user2,{}]},  
+    R2 = {[user1,{}],[user2,{}]},  
+    S2 = {[user1,{}],[user2,{}]},  
+    N3 = {[user1,{}],[user2,{[user1,mandame hola]}]},  
+    R3 = {[user1,{}],[user2,{}]},  
+    S3 = {[user2,{}],[user1,{[user2,mandame hola]}]},  
+    N4 = {[user2,{[user1,mandame hola]}],[user1,{[user2,hola]}]},  
+    R4 = {[user1,{}],[user2,{}]},  
+    S4 = {[user1,{[user2,mandame hola]}],[user2,{[user1,hola]}]},  
+    N5 = {[user1,{[user2,hola]}],[user2,{}]},  
+    R5 = {[user1,{}],[user2,{[user1,mandame hola]}]},  
+    S5 = {[user1,{[user2,mandame hola]}],[user2,{[user1,hola]}]},  
+    N6 = {[user2,{}],[user1,{}]},  
+    R6 = {[user2,{[user1,mandame hola]}],[user1,{[user2,hola]}]},  
+    S6 = {[user1,{[user2,mandame hola]}],[user2,{[user1,hola]}]},  
+    N7 = {[user2,{}],[user1,{}]},  
+    R7 = {[user2,{[user1,mandame hola]}],[user1,{}]},  
+    S7 = {[user1,{[user2,mandame hola]}],[user2,{[user1,hola]}]},  
+    N8 = {[user2,{}],[user1,{}]},  
+    R8 = {[user1,{}],[user2,{}]},  
+    S8 = {[user1,{[user2,mandame hola]}],[user2,{[user1,hola]}]}
+\end{verbatim}
+
+Es mucho más simple la lectura de esta salida a comparación de la tipada. Podemos ver que los estados 0 son los iniciales, en  el 1 y 2 agregamos los usuarios, en el 3 y 4 mandamos los ping (mensajes), en el 5 el user2 lee el mensaje de user1, en el 6 el user1 lee el mensaje de user2, en el 7 se limpia la casilla de leídos del user1 y en el 8 hace lo mismo el user2. Siempre que nos referimos a un número X es a la terna NX RX SX
+
+\section{Teoremas Tipados}
+La realización de la prueba de los teoremas fue realizada como lo indica la página 33 del apunte $setlog.pdf$. Dado que los teoremas necesitan la negación de esquemas nos vimos en la necesidad de negarlos explícitamente usando el $n\_SchemaName$
+\subsection{Primer Teorema}
+
+Como primer teorema postulamos que $AddUser$ como operación tiene que preservar las casillas como funciones parciales
+
+\begin{theorem}{AddUser1}
+(UsersNewMails \in \_ \pfun \_ \land \\
+UsersSendMails \in \_ \pfun \_ \land \\
+UsersReadMails \in \_ \pfun \_ \land \\ AddUser) \implies \\ (UsersNewMails' \in \_ \pfun \_ \land\\
+UsersSendMails' \in \_ \pfun \_ \land\\
+UsersReadMails' \in \_ \pfun \_) 
+\end{theorem}
+
+Lo que se traduce en $\{log\}$ como:
+\begin{verbatim}
+:- dec_p_type(n_gestorMailsInvPFun(casilla, casilla, casilla)).
+n_gestorMailsInvPFun(UsersNewMails,UsersReadMails,UsersSendMails) :-
+   neg(
+       pfun(UsersNewMails) & 
+       pfun(UsersReadMails) &
+       pfun(UsersSendMails) ).
+
+:- dec_p_type(gestorMailsInvPFun(casilla, casilla, casilla)).
+gestorMailsInvPFun(UsersNewMails,UsersReadMails,UsersSendMails) :-
+   pfun(UsersNewMails) & 
+   pfun(UsersReadMails) &
+   pfun(UsersSendMails).
+
+:- dec_p_type(theoremAddUser1(user, casilla, casilla,casilla,
+                              casilla, casilla,casilla)). 
+theoremAddUser1(User1,N0,R0,S0,N0_,R0_,S0_) :-
+   neg((gestorMailsInvPFun(N0,R0,S0) & addUser(N0,R0,S0,User1,N0_,R0_,S0_)) 
+        implies  gestorMailsInvPFun(N0_,R0_,S0_) ).
+        
+\end{verbatim}
+
+
+Dejamos el comando tipado de ejecución:
+\begin{verbatim}
+    theoremAddUser1(user:user1,N0,R0,S0,N1,R1,S1) & 
+    dec([N0,R0,S0,N1,R1,S1], casilla).
+\end{verbatim}
+
+Dejamos en el código un teorema similar para la operación $SendMsg$
+
+\subsection{Segundo Teorema}
+
+Como segundo teoremas queremos probar que $AddUser$ como operación tiene que preservar la invariante de $GestorMailsInv$. Dado que la invariante entera tiene dos partes, la primera donde se igualan los dominios y la segunda donde se checkea el largo de las casillas con cuantificadores universales. Para evitar las pruebas con los cuantificadores, solamente formulamos el teorema para la primera parte de la invariante pero no escapamos del problema tan fácil porque este teorema completo va a ser el demostrado en Z-Eves con uso de los cuantificadores.
+
+El teorema se enuncia como: $AddUser$ preserva la igualdad de los dominios de las casillas. Este teorema es importante porque en el caso de que $AddUser$ efectivamente agrege un usuario queremos que lo adicione a las tres casillas.
+
+\begin{theorem}{AddUser2}
+GestorMailsInvDomEq \land AddUser \implies GestorMailsInvDomEq'
+\end{theorem}
+
+
+Su traducción a $\{log\}$ es la siguiente: \newpage
+\begin{verbatim}
+:- dec_p_type(n_gestorMailsInvDomEq(casilla, casilla, casilla)).
+n_gestorMailsInvDomEq(UsersNewMails,UsersReadMails,UsersSendMails) :-
+     dec(NM, set(user)) &
+     dec(RM, set(user)) &
+     dec(SM, set(user)) & 
+     dom(UsersNewMails, NM) &
+     dom(UsersReadMails,RM) &
+     dom(UsersSendMails,SM) &
+     neg(
+     NM = RM &
+     RM = SM & 
+     SM = NM ) .
+
+:- dec_p_type(gestorMailsInvDomEq(casilla, casilla, casilla)).
+gestorMailsInvDomEq(UsersNewMails,UsersReadMails,UsersSendMails) :-
+     dec(NM, set(user)) &
+     dec(RM, set(user)) &
+     dec(SM, set(user)) & 
+     dom(UsersNewMails, NM) &
+     dom(UsersReadMails,RM) &
+     dom(UsersSendMails,SM) &
+     NM = RM &
+     RM = SM & 
+     SM = NM .
+
+
+:- dec_p_type(theoremAddUser2(user, casilla, casilla,casilla, 
+                              casilla, casilla,casilla)). 
+theoremAddUser2(User1,N0,R0,S0,N0_,R0_,S0_) :-
+neg((gestorMailsInvDomEq(N0,R0,S0) & addUser(N0,R0,S0,User1,N0_,R0_,S0_) ) 
+     implies
+     (gestorMailsInvDomEq(N0_,R0_,S0_))).
+\end{verbatim}
+
+Dejo el comando de ejecución:
+\begin{verbatim}
+    theoremAddUser2(user:user1,N0,R0,S0,N1,R1,S1) & 
+    dec([N0,R0,S0,N1,R1,S1], casilla).
+\end{verbatim}
+
+Hay un teorema extra en el código $theoremAddUser3$ que escapa a la forma $I \land Op \implies I'$ típica, y es más parecido a la forma $A \land Op \implies B$.

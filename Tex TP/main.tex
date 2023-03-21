@@ -1,0 +1,50 @@
+\documentclass[a4paper, 12pt,left = 0.3mm british, oneside]{memoir}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{dirtree}
+\usepackage{alltt}
+\usepackage{fancyhdr}
+%\usepackage{zed-csp}
+\usepackage{z-eves}
+\usepackage[spanish]{babel}
+%\addtolength{\oddsidemargin}{-.875in}
+%\addtolength{\evensidemargin}{-1in}
+%\addtolength{\textwidth}{-1in}
+%\addtolength{\topmargin}{-1in}
+%\addtolength{\textheight}{0.75in}
+\begin{document}
+
+    \begin{titlepage}
+	\centering
+	{\scshape\LARGE UNR - FCEIA \par}
+	\vspace{1cm}
+	{\scshape\Large LCC - Ingeniería de Software II\par}
+	\vspace{1.5cm}
+	{\Huge\bfseries Trabajo Práctico Testing Corrección : Fastest \par}
+	\vspace{2cm}
+	{\Large\itshap Vallejos Vigier, Franco\par}
+	\vspace{0.2cm}
+	{\Large\itshap V-2952/1\par}
+	\vspace{1cm}
+	{Febrero, 2023}
+	\vfill
+    {\Large\itshape Profesor:\par}
+	Cristiá, Maximiliano\par
+	\vfill
+    \frontmatter 
+\end{titlepage}
+    \include{sections/Introduccion}
+
+    \cleartorecto
+    \tableofcontents   
+    \mainmatter      
+    \markright{IS2}
+    \chapter{Explicación del Programa}
+    \include{sections/especZ}
+    \chapter{\{log\} y Simulaciones}
+    \include{sections/slog}
+    \chapter{Z-eves y teoremas}
+    \include{sections/zeves}
+    \chapter{Fastest}
+    \include{sections/fasttest}
+\end{document}

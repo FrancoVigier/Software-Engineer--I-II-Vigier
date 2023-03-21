@@ -1,0 +1,73 @@
+\section{Teoremas de ZEves}
+
+Dado que en las invariantes uso cuantificadores tuve en el camino ciertos obstáculos ya que ZEves no los maneja bien a la hora de realizar inferencias o reducirlos. Por ejemplo en esta situación:
+\begin{verbatim}
+Premisas: A = A'
+          B = B'
+          C = C'
+          \forall x \in A, P(x)
+          \forall y \in B, P(x)
+          \forall z \in C, P(x)
+\implies
+          \forall x' \in A', P(x)
+          \forall y' \in B', P(x)
+          \forall z' \in C', P(x)
+\end{verbatim}
+
+ZEves no lo deriva como $true$, siendo que es trivial al verlo. No podemos hacer simplificaciones o sustituciones de igualdades dentro de cuantificadores, sino que tenemos que ir más allá y utilizar normalizaciones de reducción o escritura para poder derivar $true$ con los mismos.
+
+Nuestro teorema a demostrar en ZEves, es que la operación $AddUser$ preserva la invariante $GestorMailsInv$
+
+\begin{theorem}{AddUserTheoremTotal}
+GestorMailsInv \land AddUser \implies GestorMailsInv'
+\end{theorem}
+
+Para ello creamos un sub teorema para la operación $AddUserOk$
+\begin{theorem}{AddUserOkTheorem}
+GestorMailsInv \land AddUserOk \implies GestorMailsInv'
+\end{theorem}
+
+La idea de la demostración es un $divide \& conquer$. Pasando a la demostración de la invariante para $AddUserOk$
+
+\begin{zproof}[AddUserOkTheorem]
+use axiom\$1;
+invoke;
+simplify;
+rewrite;
+equality substitute;
+rearrange;
+with normalization reduce;
+\end{zproof}
+
+La idea es que usamos la definición del axioma de $capMaxima$, invocamos los esquemas. Debido a la gran cantidad de igualaciones entre los dominios y variables reestructuramos el contenido y el goal. Ahora quedamos en una situación similar a la explicada en el comienzo de la sección por la cual Z-Eves no la puede reducir. En dicha situación tenemos como premisas:
+\begin{itemize}
+    \item Que  $\theta GestorMails$ que cumple indudablemente la invariante por hipótesis ($UsersNewMails,UsersReadMails,UsersSendMails$)
+    \item El elemento a agregar a los conjuntos del punto anterior es $(user?,\{\})$ que cumple con la invariante del largo de la casilla
+\end{itemize}
+Y del otro lado de la implicancia tenemos que $\theta GestorMails'$ fruto de insertar la tupla en los tres conjuntos, cumple con la invariante.
+
+Z-eves expande la demostración si intentamos reducirla o probarla por reducción, al contrario de lo que uno espera. Por eso utilizamos la normalización de la reducción para la exprexión, gracias a esta herramienta potente podemos demostrar $AddUserOkTheorem$
+
+Ahora pasemos a la demostración de $AddUserTheoremTotal$:
+
+\begin{zproof}[AddUserTheoremTotal]
+split AddUserOk;
+cases;
+use AddUserOkTheorem;
+simplify;
+next;
+split AddUserNoOk;
+cases;
+invoke AddUserNoOk;
+use UserInMail\$declarationPart;
+use Xi\$GestorMails\$declarationPart;
+rearrange;
+invoke UserInMail;
+invoke \Xi GestorMails;
+with normalization rewrite;
+next;
+prove by reduce;
+next;
+\end{zproof}
+
+En esta prueba sobre la operación total $AddUser$ vamos a usar un split sobre $AddUserOk$ y nos valemos del teorema pasado que sumado a una simplificación llegamos a $true$ en esa rama. Luego vamos a la rama de $AddUserNoOk$ haciendo algo parecido para su homóloga positiva, llegamos a la situación comentada al inicio de la sección dónde hay una igualación de los estados pasados y futuros acompañados con una propiedad universal para todos los estados pasados. Y a pesar de haber una igualación explícita ya que no cambia el estado de $GestorMails$ el prover de Z-Eves no deduce que esa propiedad universal se sigue cumpliendo. Aunque nos parezca trivial la demostración, no lo es. Hacemos uso de los teoremas que Z-Eves ya pudo deducir gracias a las declaraciones de los esquemas e invocandolos podemos reescribirlos con una normalización para llegar al $true$. Los siguientes salen triviales por $prove\ by\ reduce$ porque es una simple negación de todo el antecedente.

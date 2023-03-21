@@ -1,0 +1,286 @@
+\begin{zed}
+[USER, MENSAJE]
+\also
+MSJLIST == \power (USER \cross MENSAJE)
+\also
+CASILLA == USER \pfun MSJLIST
+\end{zed}
+
+\begin{axdef}
+capMaxima : \nat 
+\where
+capMaxima = 2 
+\end{axdef}
+
+\begin{schema}{GestorMails}
+UsersNewMails : CASILLA \\
+UsersReadMails : CASILLA \\
+UsersSendMails : CASILLA 
+\end{schema}
+
+\begin{schema}{GestorMailsInit}
+GestorMails
+\where
+UsersNewMails = \emptyset \\
+UsersReadMails = \emptyset \\
+UsersSendMails = \emptyset
+\end{schema}
+
+\begin{schema}{GestorMailsInv}
+GestorMails
+\where
+\dom(UsersNewMails) = \dom(UsersReadMails)\\
+\dom(UsersReadMails) = \dom(UsersSendMails) \\
+%Como en el los mail estan compuesto por tuplas (USER,P USERxMENSAJE) controlo el largo del segundo de la tupla
+\forall x : USER |x \in \dom UsersNewMails @ \# (UsersNewMails(x)) \leq capMaxima \\
+\forall x : USER |x \in \dom UsersReadMails @ \# (UsersReadMails(x)) \leq capMaxima \\
+\forall x : USER |x \in \dom UsersSendMails @ \# (UsersSendMails(x)) \leq capMaxima 
+
+
+\end{schema}
+
+\begin{schema}{SendMsgOk}
+\Delta GestorMails \\
+to?: USER \\
+from?: USER \\
+body? : MENSAJE
+\where
+
+to? \in \dom(UsersNewMails) \\
+from? \in \dom(UsersSendMails) \\
+
+(\# (UsersNewMails(to?))) + 1 \leq capMaxima \\
+(\# (UsersSendMails(from?))) + 1 \leq capMaxima \\
+
+UsersSendMails' = UsersSendMails \oplus \{from? \mapsto (UsersSendMails(from?)) \cup \{(to?,body?)\} \} \\ 
+UsersNewMails' = UsersNewMails \oplus \{to? \mapsto (UsersNewMails(to?)) \cup \{(from?,body?)\} \} \\
+UsersReadMails' = UsersReadMails
+
+%\exists buzonTo : MSJLIST @ (\exists buzonSend : MSJLIST  @( 
+%(to?,buzonTo) \in UsersNewMails \land
+%((\# buzonTo)+1)\leq capMaxima \land
+
+%(from?,buzonSend) \in UsersSendMails \land
+%((\# buzonSend)+1)\leq capMaxima \land
+
+%UsersSendMails' = UsersSendMails \oplus \{from? \mapsto buzonSend \cup \{(to?,body?)\} \} \land 
+%UsersNewMails' = UsersNewMails \oplus \{to? \mapsto buzonTo \cup \{(from?,body?)\} \} \land
+%UsersReadMails' = UsersReadMails))
+\end{schema}
+
+\begin{schema}{EmisorUnreachable}
+\Xi GestorMails \\
+from? : USER
+\where
+from? \notin \dom(UsersSendMails)
+\end{schema}
+
+\begin{schema}{DestinoUnreachable}
+\Xi GestorMails \\
+to? : USER
+\where
+to? \notin \dom(UsersNewMails)
+\end{schema}
+
+\begin{schema}{FullSendBox}
+\Xi GestorMails \\
+from? :USER \\
+\where
+
+\lnot(((\# (UsersSendMails(from?)))+1)\leq capMaxima)
+\end{schema}
+
+\begin{schema}{FullNewBox}
+\Xi GestorMails \\
+to? :USER 
+\where
+\lnot(((\# (UsersNewMails(to?)))+1)\leq capMaxima)
+\end{schema}
+
+\begin{zed}
+SendMgsNoOk \defs EmisorUnreachable \lor DestinoUnreachable \lor FullSendBox \lor FullNewBox \\
+\end{zed}
+\begin{zed}
+SendMsg \defs SendMsgOk \lor SendMgsNoOk \\
+\end{zed}
+
+\begin{schema}{ReadMsgOk}
+\Delta GestorMails \\
+lector? :USER\\
+msg! :MENSAJE 
+\where
+lector? \in \dom(UsersNewMails) \\
+lector? \in \dom(UsersReadMails) \\
+\exists u: USER @(\exists m: MENSAJE @(
+(u,m) \in (UsersNewMails(lector?)) \land 
+msg!  = m \land
+(\# (UsersReadMails(lector?)) + 1) \leq capMaxima \land
+UsersNewMails' =  UsersNewMails \oplus \{lector? \mapsto (UsersNewMails(lector?))  \setminus \{(u,m)\}\} \land
+UsersReadMails' = UsersReadMails \oplus \{lector? \mapsto (UsersReadMails(lector?)) \cup \{(u,m)\} \} \land
+UsersSendMails' = UsersSendMails ))
+\end{schema}
+
+\begin{schema}{LectorNotFound}
+\Xi GestorMails \\
+lector?: USER 
+\where
+(lector? \notin \dom(UsersNewMails) \\
+\lor
+lector? \notin \dom(UsersReadMails)) 
+\end{schema}
+
+\begin{schema}{NewBoxEmpty}
+\Xi GestorMails \\
+lector?: USER \\
+\where
+\#(UsersNewMails(lector?)) = 0
+\end{schema}
+
+\begin{schema}{ReadBoxFull}
+\Xi GestorMails \\
+lector?: USER 
+\where
+\lnot ((\# (UsersReadMails(lector?)))+1 \leq capMaxima)
+\end{schema}
+
+\begin{zed}
+ReadMsgNoOk \defs NewBoxEmpty \lor ReadBoxFull \lor LectorNotFound \\
+\end{zed}
+\begin{zed}
+ReadMsg \defs ReadMsgOk \lor ReadMsgNoOk \\
+\end{zed}
+
+\begin{schema}{CleanReadBoxOk}
+\Delta GestorMails\\
+user?:USER
+\where
+user? \in \dom UsersReadMails \\
+UsersReadMails' =  UsersReadMails \oplus \{user? \mapsto \emptyset  \} \\
+UsersNewMails' = UsersNewMails \\
+UsersSendMails' = UsersSendMails
+\end{schema}
+
+\begin{schema}{CleanReadBoxNoOk}
+\Xi GestorMails \\
+user?:USER
+\where
+user? \notin \dom UsersReadMails \\
+\end{schema}
+
+\begin{zed}
+CleanReadBox \defs CleanReadBoxOk \lor CleanReadBoxNoOk \\
+\end{zed}
+
+\begin{schema}{CleanSendBoxOk}
+\Delta GestorMails\\
+user?:USER
+\where
+user? \in \dom UsersSendMails \\
+UsersSendMails' =  UsersSendMails \oplus \{user? \mapsto \emptyset  \} \\
+UsersNewMails' = UsersNewMails \\
+UsersReadMails' = UsersReadMails
+\end{schema}
+
+\begin{schema}{CleanSendBoxNoOk}
+\Xi GestorMails \\
+user?:USER
+\where
+user? \notin \dom UsersSendMails \\
+\end{schema}
+
+
+\begin{zed}
+CleanSendBox \defs CleanSendBoxOk \lor CleanSendBoxNoOk \\
+\end{zed}
+
+\begin{schema}{CleanNewBoxOk}
+\Delta GestorMails\\
+user?:USER
+\where
+user? \in \dom UsersNewMails \\
+UsersNewMails' =  UsersNewMails \oplus \{user? \mapsto \emptyset  \} \\
+UsersSendMails' = UsersSendMails \\
+UsersReadMails' = UsersReadMails
+\end{schema}
+
+\begin{schema}{CleanNewBoxNoOk}
+\Xi GestorMails \\
+user?:USER
+\where
+user? \notin \dom UsersNewMails \\
+\end{schema}
+
+\begin{zed}
+CleanNewBox \defs CleanNewBoxOk \lor CleanNewBoxNoOk \\
+\end{zed}
+
+\begin{schema}{AddUserOk}
+\Delta GestorMails \\
+user? : USER
+\where
+user? \notin \dom(UsersNewMails) \\
+user? \notin \dom(UsersReadMails) \\
+user? \notin \dom(UsersSendMails) \\
+
+UsersNewMails' = UsersNewMails \cup \{(user?,\emptyset)\} \\
+UsersReadMails' = UsersReadMails \cup \{(user?,\emptyset)\} \\
+UsersSendMails' = UsersSendMails \cup \{(user?,\emptyset)\} 
+\end{schema}
+
+\begin{schema}{UserInMail}
+\Xi GestorMails \\
+user?: USER
+\where
+(user? \in \dom(UsersNewMails)\\
+\lor
+user? \in \dom(UsersReadMails) \\
+\lor
+user? \in \dom(UsersSendMails))  
+\end{schema}
+
+\begin{zed}
+AddUserNoOk \defs UserInMail \\
+\end{zed}
+\begin{zed}
+AddUser \defs AddUserOk \lor AddUserNoOk \\
+\end{zed}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%TEOREMAS%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{theorem}{AddUserOkTheorem}
+GestorMailsInv \land AddUserOk \implies GestorMailsInv'
+\end{theorem}
+
+
+\begin{zproof}[AddUserOkTheorem]
+use axiom$1;
+invoke;
+simplify;
+rewrite;
+equality substitute;
+rearrange;
+with normalization reduce;
+\end{zproof}
+
+\begin{theorem}{AddUserTheoremTotal}
+GestorMailsInv \land AddUser \implies GestorMailsInv'
+\end{theorem}
+
+\begin{zproof}[AddUserTheoremTotal]
+split AddUserOk;
+cases;
+use AddUserOkTheorem;
+simplify;
+next;
+split AddUserNoOk;
+cases;
+invoke AddUserNoOk;
+use UserInMail$declarationPart;
+use Xi$GestorMails$declarationPart;
+rearrange;
+invoke UserInMail;
+invoke \Xi GestorMails;
+with normalization rewrite;
+next;
+prove by reduce;
+next;
+\end{zproof}

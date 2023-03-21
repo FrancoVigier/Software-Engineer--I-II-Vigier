@@ -1,0 +1,216 @@
+\section{Casos de prueba}
+Realizo casos de prueba para la operación $AddUser$ con la siguiente batería de operaciones
+\begin{verbatim}
+    loadspec mailft.tex
+    selop AddUser
+    genalltt
+    addtactic AddUser_DNF_1 SP \notin user? \notin \dom UsersNewMails
+    addtactic AddUser_DNF_1 SP \notin user? \notin \dom UsersReadMails
+    addtactic AddUser_DNF_1 SP \notin user? \notin \dom UsersSendMails
+    addtactic AddUser_DNF_2 SP \in user? \in \dom UsersNewMails
+    addtactic AddUser_DNF_3 SP \in user? \in \dom UsersReadMails
+    addtactic AddUser_DNF_4 SP \in user? \in \dom UsersSendMails
+    genalltt
+    prunett
+    genalltca
+\end{verbatim}
+Primero aplicamos la tactica DNF, obteniendo 4 de ellas:
+\begin{itemize}
+    \item DNF1 : corresponde a $UserAddOk$
+    \item DNF2 : corresponde a $UserAddNoOk$ pero como es un esquema con conjunciones, este DNF hace referencia a la sentencia $user? \in \dom UsersNewMails$
+    \item DNF3 : corresponde a $UserAddNoOk$ pero como es un esquema con conjunciones, este DNF hace referencia a la sentencia $user? \in \dom UsersReadMails$
+    \item DNF4 : corresponde a $UserAddNoOk$ pero como es un esquema con conjunciones, este DNF hace referencia a la sentencia $user? \in \dom UsersSendMails$
+\end{itemize}
+\newpage
+Y luego con la $Standard Partition$ obtenemos la siguientes casos abstractos de prueba:
+
+\dirtree{%
+.1 $AddUser\_VIS$.
+.2 $AddUser\_DNF\_1$.
+.3 $AddUser\_SP\_1$.
+.4 $AddUser\_SP\_3$.
+.5 $AddUser\_SP\_5$.
+.6 $AddUser\_SP\_5\_TCASE$.
+.5 $AddUser\_SP\_6$.
+.6 $AddUser\_SP\_6\_TCASE$.
+.4 $AddUser\_SP\_4$.
+.5 $AddUser\_SP\_7$.
+.6 $AddUser\_SP\_7\_TCASE$.
+.5 $AddUser\_SP\_8$.
+.6 $AddUser\_SP\_8\_TCASE$.
+.3 $AddUser\_SP\_2$.
+.4 $AddUser\_SP\_9$.
+.5 $AddUser\_SP\_11$.
+.6 $AddUser\_SP\_11\_TCASE$.
+.5 $AddUser\_SP\_12$.
+.6 $AddUser\_SP\_12\_TCASE$.
+.4 $AddUser\_SP\_10$.
+.5 $AddUser\_SP\_13$.
+.6 $AddUser\_SP\_13\_TCASE$.
+.5 $AddUser\_SP\_14$.
+.6 $AddUser\_SP\_14\_TCASE$.
+.2 $AddUser\_DNF\_2$.
+.3 $AddUser\_SP\_15$.
+.4 $AddUser\_SP\_15\_TCASE$.
+.3 $AddUser\_SP\_16$.
+.4 $AddUser\_SP\_16\_TCASE$.
+.2 $AddUser\_DNF\_3$.
+.3 $AddUser\_SP\_19$.
+.4 $AddUser\_SP\_19\_TCASE$.
+.3 $AddUser\_SP\_\20$.
+.4 $AddUser\_SP\_20\_TCASE$.
+.2 $AddUser\_DNF\_4$.
+.3 $AddUser\_SP\_17$.
+.4 $AddUser\_SP\_17\_TCASE$.
+.3 $AddUser\_SP\_18$.
+.4 $AddUser\_SP\_18\_TCASE$.
+}
+
+Los casos abstractos de prueba los mostramos con $showsch -tca$ y son los siguientes:
+
+\begin{schema}{AddUser\_ SP\_ 5\_ TCASE}\\
+ AddUser\_ SP\_ 5
+\where
+ UsersSendMails =~\emptyset \\
+ UsersReadMails =~\emptyset \\
+ user? = uSER1 \\
+ UsersNewMails =~\emptyset
+\end{schema}
+
+
+\begin{schema}{AddUser\_ SP\_ 6\_ TCASE}\\
+ AddUser\_ SP\_ 6
+\where
+ UsersSendMails = \{ ( uSER2 \mapsto \{ ( uSER1 \mapsto mENSAJE1 ) \} ) \} \\
+ UsersReadMails =~\emptyset \\
+ user? = uSER1 \\
+ UsersNewMails =~\emptyset
+\end{schema}
+
+
+\begin{schema}{AddUser\_ SP\_ 7\_ TCASE}\\
+ AddUser\_ SP\_ 7
+\where
+ UsersSendMails =~\emptyset \\
+ UsersReadMails = \{ ( uSER2 \mapsto \{ ( uSER1 \mapsto mENSAJE1 ) \} ) \} \\
+ user? = uSER1 \\
+ UsersNewMails =~\emptyset
+\end{schema}
+
+
+\begin{schema}{AddUser\_ SP\_ 8\_ TCASE}\\
+ AddUser\_ SP\_ 8
+\where
+ UsersSendMails = \{ ( uSER2 \mapsto \{ ( uSER1 \mapsto mENSAJE1 ) \} ) \} \\
+ UsersReadMails = \{ ( uSER2 \mapsto \{ ( uSER1 \mapsto mENSAJE1 ) \} ) \} \\
+ user? = uSER1 \\
+ UsersNewMails =~\emptyset
+\end{schema}
+
+
+\begin{schema}{AddUser\_ SP\_ 11\_ TCASE}\\
+ AddUser\_ SP\_ 11
+\where
+ UsersSendMails =~\emptyset \\
+ UsersReadMails =~\emptyset \\
+ user? = uSER1 \\
+ UsersNewMails = \{ ( uSER2 \mapsto \{ ( uSER1 \mapsto mENSAJE1 ) \} ) \}
+\end{schema}
+
+
+\begin{schema}{AddUser\_ SP\_ 12\_ TCASE}\\
+ AddUser\_ SP\_ 12
+\where
+ UsersSendMails = \{ ( uSER2 \mapsto \{ ( uSER1 \mapsto mENSAJE1 ) \} ) \} \\
+ UsersReadMails =~\emptyset \\
+ user? = uSER1 \\
+ UsersNewMails = \{ ( uSER2 \mapsto \{ ( uSER1 \mapsto mENSAJE1 ) \} ) \}
+\end{schema}
+
+
+\begin{schema}{AddUser\_ SP\_ 13\_ TCASE}\\
+ AddUser\_ SP\_ 13
+\where
+ UsersSendMails =~\emptyset \\
+ UsersReadMails = \{ ( uSER2 \mapsto \{ ( uSER1 \mapsto mENSAJE1 ) \} ) \} \\
+ user? = uSER1 \\
+ UsersNewMails = \{ ( uSER2 \mapsto \{ ( uSER1 \mapsto mENSAJE1 ) \} ) \}
+\end{schema}
+
+
+\begin{schema}{AddUser\_ SP\_ 14\_ TCASE}\\
+ AddUser\_ SP\_ 14
+\where
+ UsersSendMails = \{ ( uSER2 \mapsto \{ ( uSER1 \mapsto mENSAJE1 ) \} ) \} \\
+ UsersReadMails = \{ ( uSER2 \mapsto \{ ( uSER1 \mapsto mENSAJE1 ) \} ) \} \\
+ user? = uSER1 \\
+ UsersNewMails = \{ ( uSER2 \mapsto \{ ( uSER1 \mapsto mENSAJE1 ) \} ) \}
+\end{schema}
+
+
+\begin{schema}{AddUser\_ SP\_ 15\_ TCASE}\\
+ AddUser\_ SP\_ 15
+\where
+ UsersSendMails =~\emptyset \\
+ UsersReadMails =~\emptyset \\
+ user? = uSER1 \\
+ UsersNewMails = \{ ( uSER1 \mapsto \{ ( uSER1 \mapsto mENSAJE2 ) \} ) \}
+\end{schema}
+
+{\footnotesize
+\begin{schema}{AddUser\_ SP\_ 16\_ TCASE}\\
+ AddUser\_ SP\_ 16
+\where
+ UsersSendMails =~\emptyset \\
+ UsersReadMails =~\emptyset \\
+ user? = uSER1 \\
+ UsersNewMails = \{ ( uSER1 \mapsto \{ ( uSER1 \mapsto mENSAJE2 ) \} ) , ( uSER3 \mapsto \{ ( uSER1 \mapsto mENSAJE2 ) \} ) \}
+\end{schema}
+}
+
+\begin{schema}{AddUser\_ SP\_ 19\_ TCASE}\\
+ AddUser\_ SP\_ 19
+\where
+ UsersSendMails =~\emptyset \\
+ UsersReadMails = \{ ( uSER1 \mapsto \{ ( uSER1 \mapsto mENSAJE2 ) \} ) \} \\
+ user? = uSER1 \\
+ UsersNewMails =~\emptyset
+\end{schema}
+
+{\footnotesize
+\begin{schema}{AddUser\_ SP\_ 20\_ TCASE}\\
+ AddUser\_ SP\_ 20
+\where
+ UsersSendMails =~\emptyset \\
+ UsersReadMails = \{ ( uSER1 \mapsto \{ ( uSER1 \mapsto mENSAJE2 ) \} ) , ( uSER3 \mapsto \{ ( uSER1 \mapsto mENSAJE2 ) \} ) \} \\
+ user? = uSER1 \\
+ UsersNewMails =~\emptyset
+\end{schema}
+}
+
+\begin{schema}{AddUser\_ SP\_ 17\_ TCASE}\\
+ AddUser\_ SP\_ 17
+\where
+ UsersSendMails = \{ ( uSER1 \mapsto \{ ( uSER1 \mapsto mENSAJE2 ) \} ) \} \\
+ UsersReadMails =~\emptyset \\
+ user? = uSER1 \\
+ UsersNewMails =~\emptyset
+\end{schema}
+
+{\footnotesize
+\begin{schema}{AddUser\_ SP\_ 18\_ TCASE}\\
+ AddUser\_ SP\_ 18
+\where
+ UsersSendMails = \{ ( uSER1 \mapsto \{ ( uSER1 \mapsto mENSAJE2 ) \} ) , ( uSER3 \mapsto \{ ( uSER1 \mapsto mENSAJE2 ) \} ) \} \\
+ UsersReadMails =~\emptyset \\
+ user? = uSER1 \\
+ UsersNewMails =~\emptyset
+\end{schema}
+}
+
+Como nuestra operación $AddUser$ es una conjunción de esquemas que en sus precondiciones está solamente el operador $\in$ en ellos, optamos por la técnica de partición estándar para generar el árbol de casos. En la partición del operador $\notin$ en las expresiones del estilo $x \notin A$ se va a particionar según si $A = \{\}$ o $A \neq \{\}$ tal como dice el $user \  guide$ de fastest. 
+
+De forma obvia vamos a tener una estructura más densa de clases que nacen del $DNF\_1$ ya que en esta clase vamos a particionar sobre cada expresión con el operador $\notin$ que haya por lo tanto vamos a generar casos abstractos de prueba por cada combinación que se de entre las particiones de los predicados de dicho DNF. Es decir, todas las combinaciones entre las 3 casillas ($UsersSendMails$, $UsersReadMails$ y $UsersNewMails$) y estas por la partición pueden adoptar 2 valores (vacío y no vacío) son $2^3$ casos de prueba (5,6,7,8,11,12,13,14).
+De análisis similar al anterior los DNF siguientes son más simples, ahora solamente particionamos sobre el operador $\in$ en una sola expresión.
+
+En los casos de prueba obviamente vamos a encontrar algunos que vayan en contra de los teoremas de $AddUser$ que probamos en $\{log\}$, entre dichos casos son aquellos donde el dominio de las casillas son distintos. Pero a fines de testear la operación son válidos.
